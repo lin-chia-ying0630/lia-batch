@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.alinlin.liabatch.mapper.LiaReportSourceDataMapper">
+
+    <select id="selectCompany" resultType="com.alinlin.liabatch.dto.CompanyDto">
+        SELECT
+            company_code
+        FROM lia_company
+        WHERE active_flag = 'Y'
+        ORDER BY company_code
+        LIMIT 1
+    </select>
+
+    <select id="selectPolicy" resultType="com.alinlin.liabatch.dto.PolicyDto">
+        SELECT
+            company_code,
+            policy_no,
+            policy_seq,
+            change_seq,
+            insured_amount
+        FROM lia_policy
+        WHERE active_flag = 'Y'
+        ORDER BY updated_at DESC, policy_no
+        LIMIT 1
+    </select>
+
+    <select id="selectCustomer" resultType="com.alinlin.liabatch.dto.CustomerDto">
+        SELECT
+            customer_id,
+            customer_name,
+            customer_type,
+            id_type,
+            id_no
+        FROM lia_customer
+        WHERE active_flag = 'Y'
+        ORDER BY updated_at DESC, customer_id
+        LIMIT 1
+    </select>
+
+    <select id="selectProduct" resultType="com.alinlin.liabatch.dto.ProductDto">
+        SELECT
+            product_code,
+            product_name
+        FROM lia_product
+        WHERE active_flag = 'Y'
+        ORDER BY updated_at DESC, product_code
+        LIMIT 1
+    </select>
+
+    <select id="selectPayment" resultType="com.alinlin.liabatch.dto.PaymentDto">
+        SELECT
+            pay_period_type,
+            pay_period
+        FROM lia_payment
+        WHERE active_flag = 'Y'
+        ORDER BY updated_at DESC, payment_id
+        LIMIT 1
+    </select>
+</mapper>

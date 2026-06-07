@@ -1,0 +1,34 @@
+package com.alinlin.liabatch.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * LIA通報資料集合。
+ * <p>
+ * 表示產生一筆通報 TXT 所需的全部來源 DTO，並依 Excel 規格的 sourceFile 找到對應資料物件。
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class LiaReportData {
+    private CompanyDto company;
+    private PolicyDto policy;
+    private CustomerDto customer;
+    private ProductDto product;
+    private PaymentDto payment;
+
+    public Object sourceObject(String sourceFile) {
+        return switch (sourceFile) {
+            case "COMPANY" -> company;
+            case "POLICY" -> policy;
+            case "CUSTOMER" -> customer;
+            case "PRODUCT" -> product;
+            case "PAYMENT" -> payment;
+            default -> throw new IllegalArgumentException("未知的 sourceFile：" + sourceFile);
+        };
+    }
+}
