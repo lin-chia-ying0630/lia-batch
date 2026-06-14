@@ -28,7 +28,7 @@ public class LiaReportData {
     private PaymentDto payment;
 
     public Object sourceObject(String sourceFile) {
-        return switch (sourceFile) {
+        return switch (normalizeSourceFile(sourceFile)) {
             case "POLICY" -> policy;
             case "CUSTOMER" -> customer;
             case "PRODUCT_ORDER" -> productOrder;
@@ -36,5 +36,15 @@ public class LiaReportData {
             case "PAYMENT" -> payment;
             default -> throw new IllegalArgumentException("未知的 sourceFile：" + sourceFile);
         };
+    }
+
+    private String normalizeSourceFile(String sourceFile) {
+        if (sourceFile == null) {
+            return "";
+        }
+        return sourceFile.trim()
+                .replaceAll("([a-z])([A-Z])", "$1_$2")
+                .replace('-', '_')
+                .toUpperCase();
     }
 }
