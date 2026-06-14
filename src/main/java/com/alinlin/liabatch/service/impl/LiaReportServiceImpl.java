@@ -4,7 +4,7 @@ import com.alinlin.liabatch.dto.LiaFieldSpecDto;
 import com.alinlin.liabatch.dto.LiaReportData;
 import com.alinlin.liabatch.dto.LiaReportGenerateResult;
 import com.alinlin.liabatch.dto.LiaReportOutputSettingDto;
-import com.alinlin.liabatch.dto.LiaReportOutputType;
+import com.alinlin.liabatch.enumvalue.LiaReportOutputType;
 import com.alinlin.liabatch.dto.LiaReportSpecDto;
 import com.alinlin.liabatch.repository.LiaReportDataRepository;
 import com.alinlin.liabatch.service.LiaReportExcelSpecReader;

@@ -4,13 +4,9 @@ CREATE DATABASE IF NOT EXISTS lia_batch
 
 USE lia_batch;
 
-CREATE TABLE IF NOT EXISTS lia_company (
-    company_code VARCHAR(2) NOT NULL COMMENT '公司代號',
-    company_name VARCHAR(100) NULL COMMENT '公司中文名稱',
-    active_flag CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '有效註記',
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最後更新時間',
-    PRIMARY KEY (company_code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA公司資料';
+ALTER DATABASE lia_batch
+    DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS lia_policy (
     policy_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '保單資料流水號',
@@ -18,11 +14,13 @@ CREATE TABLE IF NOT EXISTS lia_policy (
     policy_no VARCHAR(15) NOT NULL COMMENT '保單號碼',
     policy_seq VARCHAR(5) NOT NULL COMMENT '保單編號序號',
     change_seq VARCHAR(5) NOT NULL COMMENT '異動序號',
+    product_code VARCHAR(20) NOT NULL COMMENT '購買商品代號',
     insured_amount DECIMAL(18, 0) NOT NULL COMMENT '保險金額',
     active_flag CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '有效註記',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最後更新時間',
     PRIMARY KEY (policy_id),
-    KEY idx_lia_policy_active (active_flag, updated_at)
+    KEY idx_lia_policy_active (active_flag, updated_at),
+    KEY idx_lia_policy_product (product_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA保單資料';
 
 CREATE TABLE IF NOT EXISTS lia_customer (
@@ -55,3 +53,8 @@ CREATE TABLE IF NOT EXISTS lia_payment (
     PRIMARY KEY (payment_id),
     KEY idx_lia_payment_active (active_flag, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA繳費資料';
+
+ALTER TABLE lia_policy CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE lia_customer CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE lia_product CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE lia_payment CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -1,4 +1,4 @@
-package com.alinlin.liabatch.dto;
+package com.alinlin.liabatch.enumvalue;
 
 import java.util.Arrays;
 import java.util.EnumSet;

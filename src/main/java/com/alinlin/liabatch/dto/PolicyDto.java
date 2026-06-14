@@ -17,9 +17,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PolicyDto {
+    private Long policyId;
     private String companyCode;
     private String policyNo;
     private String policySeq;
     private String changeSeq;
+    private String productCode;
     private BigDecimal insuredAmount;
 }

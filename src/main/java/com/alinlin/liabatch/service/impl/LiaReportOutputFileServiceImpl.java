@@ -1,6 +1,5 @@
 package com.alinlin.liabatch.service.impl;
 
-import com.alinlin.liabatch.dto.CompanyDto;
 import com.alinlin.liabatch.dto.LiaReportData;
 import com.alinlin.liabatch.service.LiaReportOutputFileService;
 import org.springframework.stereotype.Service;
@@ -55,10 +54,6 @@ public class LiaReportOutputFileServiceImpl implements LiaReportOutputFileServic
     }
 
     private String defaultFileName(LiaReportData reportData) {
-        CompanyDto company = reportData.getCompany();
-        String companyCode = company == null || company.getCompanyCode() == null
-                ? "NA"
-                : company.getCompanyCode();
-        return "LIA_REPORT_" + companyCode + "_" + LocalDateTime.now().format(FORMATTER) + ".txt";
+        return "LIA_REPORT_" + LocalDateTime.now().format(FORMATTER) + ".txt";
     }
 }

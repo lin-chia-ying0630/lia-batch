@@ -1,6 +1,9 @@
 package com.alinlin.liabatch.repository.impl;
 
+import com.alinlin.liabatch.dto.CustomerDto;
 import com.alinlin.liabatch.dto.LiaReportData;
+import com.alinlin.liabatch.dto.PolicyDto;
+import com.alinlin.liabatch.dto.ProductDto;
 import com.alinlin.liabatch.mapper.LiaReportSourceDataMapper;
 import com.alinlin.liabatch.repository.LiaReportDataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +26,22 @@ public class MybatisLiaReportRepositoryImpl implements LiaReportDataRepository {
 
     @Override
     public LiaReportData selectReportData() {
+        PolicyDto policy = sourceDataMapper.selectPolicy();
+        if (policy == null) {
+            throw new IllegalStateException("找不到可產檔保單資料：需 lia_policy.active_flag='Y'，且 lia_customer.customer_id=lia_policy.policy_id，並且 lia_product.product_code=lia_policy.product_code");
+        }
+        CustomerDto customer = sourceDataMapper.selectCustomerByPolicyId(policy.getPolicyId());
+        if (customer == null) {
+            throw new IllegalStateException("找不到保單對應客戶：lia_customer.customer_id 必須等於 lia_policy.policy_id，policy_id=" + policy.getPolicyId());
+        }
+        ProductDto product = sourceDataMapper.selectProductByProductCode(policy.getProductCode());
+        if (product == null) {
+            throw new IllegalStateException("找不到保單對應商品：lia_product.product_code 必須等於 lia_policy.product_code，product_code=" + policy.getProductCode());
+        }
         return LiaReportData.builder()
-                .company(sourceDataMapper.selectCompany())
-                .policy(sourceDataMapper.selectPolicy())
-                .customer(sourceDataMapper.selectCustomer())
-                .product(sourceDataMapper.selectProduct())
+                .policy(policy)
+                .customer(customer)
+                .product(product)
                 .payment(sourceDataMapper.selectPayment())
                 .build();
     }

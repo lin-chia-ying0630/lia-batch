@@ -1,11 +1,11 @@
 package com.alinlin.liabatch.mapper;
 
-import com.alinlin.liabatch.dto.CompanyDto;
 import com.alinlin.liabatch.dto.CustomerDto;
 import com.alinlin.liabatch.dto.PaymentDto;
 import com.alinlin.liabatch.dto.PolicyDto;
 import com.alinlin.liabatch.dto.ProductDto;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * LIA通報來源資料 MyBatis Mapper。
@@ -14,13 +14,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface LiaReportSourceDataMapper {
-    CompanyDto selectCompany();
-
     PolicyDto selectPolicy();
 
-    CustomerDto selectCustomer();
+    CustomerDto selectCustomerByPolicyId(@Param("policyId") Long policyId);
 
-    ProductDto selectProduct();
+    ProductDto selectProductByProductCode(@Param("productCode") String productCode);
 
     PaymentDto selectPayment();
 }

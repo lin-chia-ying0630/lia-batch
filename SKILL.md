@@ -26,7 +26,7 @@
 3. 讀取 `outputFileDetail` 工作表，依 `outputFileName` 分組欄位規格。
 4. 檢查每一個 `outputFileName` 群組內的 `startPos`、`endPos`、`length` 與欄位位置是否連續正確。
 5. 透過 repository/MyBatis 從 MySQL 讀取來源資料。
-6. 組成 `LiaReportData`，包含 `company`、`policy`、`customer`、`product`、`payment`。
+6. 組成 `LiaReportData`，包含 `policy`、`customer`、`product`、`payment`；公司代號等固定內容由 `fixedValue` 提供。
 7. 依 Excel 規格的 `sourceFile + sourceField` 從 `LiaReportData` 取值；若兩欄皆空白，改用 `fixedValue` 固定值。
 8. 依 `dataType` 與 `decimalPlaces` 格式化資料；`dataType=X` 表示靠左補空白，`dataType=9` 表示靠右補 `0`，`decimalPlaces` 表示數字欄位的小數位數。
 9. 依 `outputSettings` 工作表決定輸出格式與檔名，可輸出 TXT、ZIP、Excel 或複選輸出。
@@ -40,7 +40,7 @@
 - Mapper XML 放在 `src/main/resources/mapper`。
 - SQL 放在 XML，不放在 service class。
 - `LiaReportSourceDataMapper.xml` 使用下列 MySQL 資料表：
-  `lia_company`、`lia_policy`、`lia_customer`、`lia_product`、`lia_payment`。
+  `lia_policy`、`lia_customer`、`lia_product`、`lia_payment`。
 - 執行時資料來源固定使用 MySQL/MyBatis。
 
 ## MySQL 建檔
@@ -68,6 +68,7 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 - `sourceFile` 與 `sourceField` 兩欄都空白：使用 `fixedValue`。
 - `sourceFile` 與 `sourceField` 只能同時填或同時空白，不可只填其中一欄。
 - `fixedValue` 可空白；空白時仍會依 `dataType` 做補位。
+- 公司代號目前不查 DB，請在 `COMPANY_CODE` 欄位使用 `fixedValue=109`。
 
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表以一列代表一組輸出檔：
 

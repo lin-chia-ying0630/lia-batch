@@ -4,29 +4,28 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.alinlin.liabatch.mapper.LiaReportSourceDataMapper">
 
-    <select id="selectCompany" resultType="com.alinlin.liabatch.dto.CompanyDto">
-        SELECT
-            company_code
-        FROM lia_company
-        WHERE active_flag = 'Y'
-        ORDER BY company_code
-        LIMIT 1
-    </select>
-
     <select id="selectPolicy" resultType="com.alinlin.liabatch.dto.PolicyDto">
         SELECT
-            company_code,
-            policy_no,
-            policy_seq,
-            change_seq,
-            insured_amount
-        FROM lia_policy
-        WHERE active_flag = 'Y'
-        ORDER BY updated_at DESC, policy_no
+            p.policy_id,
+            p.company_code,
+            p.policy_no,
+            p.policy_seq,
+            p.change_seq,
+            p.product_code,
+            p.insured_amount
+        FROM lia_policy p
+        INNER JOIN lia_customer c
+            ON c.active_flag = 'Y'
+           AND c.customer_id COLLATE utf8mb4_unicode_ci = CAST(p.policy_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+        INNER JOIN lia_product pr
+            ON pr.active_flag = 'Y'
+           AND pr.product_code COLLATE utf8mb4_unicode_ci = p.product_code COLLATE utf8mb4_unicode_ci
+        WHERE p.active_flag = 'Y'
+        ORDER BY p.updated_at DESC, p.policy_no
         LIMIT 1
     </select>
 
-    <select id="selectCustomer" resultType="com.alinlin.liabatch.dto.CustomerDto">
+    <select id="selectCustomerByPolicyId" resultType="com.alinlin.liabatch.dto.CustomerDto">
         SELECT
             customer_id,
             customer_name,
@@ -35,16 +34,18 @@
             id_no
         FROM lia_customer
         WHERE active_flag = 'Y'
+          AND customer_id COLLATE utf8mb4_unicode_ci = CAST(#{policyId} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
         ORDER BY updated_at DESC, customer_id
         LIMIT 1
     </select>
 
-    <select id="selectProduct" resultType="com.alinlin.liabatch.dto.ProductDto">
+    <select id="selectProductByProductCode" resultType="com.alinlin.liabatch.dto.ProductDto">
         SELECT
             product_code,
             product_name
         FROM lia_product
         WHERE active_flag = 'Y'
+          AND product_code COLLATE utf8mb4_unicode_ci = CAST(#{productCode} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
         ORDER BY updated_at DESC, product_code
         LIMIT 1
     </select>

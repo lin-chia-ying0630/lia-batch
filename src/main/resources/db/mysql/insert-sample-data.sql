@@ -2,28 +2,33 @@ SET NAMES utf8mb4;
 
 USE lia_batch;
 
-INSERT INTO lia_company (company_code, company_name, active_flag)
-VALUES ('01', '公司', 'Y')
-ON DUPLICATE KEY UPDATE
-    company_name = VALUES(company_name),
-    active_flag = VALUES(active_flag),
-    updated_at = CURRENT_TIMESTAMP;
-
 INSERT INTO lia_policy (
+    policy_id,
     company_code,
     policy_no,
     policy_seq,
     change_seq,
+    product_code,
     insured_amount,
     active_flag
 ) VALUES (
+    1,
     '01',
     'POL123456789',
     '00001',
     '1',
+    'P001',
     1000000,
     'Y'
-);
+) ON DUPLICATE KEY UPDATE
+    company_code = VALUES(company_code),
+    policy_no = VALUES(policy_no),
+    policy_seq = VALUES(policy_seq),
+    change_seq = VALUES(change_seq),
+    product_code = VALUES(product_code),
+    insured_amount = VALUES(insured_amount),
+    active_flag = VALUES(active_flag),
+    updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO lia_customer (
     customer_id,
@@ -33,7 +38,7 @@ INSERT INTO lia_customer (
     id_no,
     active_flag
 ) VALUES (
-    'A123456789',
+    '1',
     '王小明',
     'P',
     '1',

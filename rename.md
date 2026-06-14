@@ -40,12 +40,6 @@ target/out/LIA_REPORT_01_20260607103000.txt.writing
 
 ## 正式檔名
 
-當 `--output` 是目錄時，系統會自動產生檔名：
-
-```text
-LIA_REPORT_{companyCode}_{yyyyMMddHHmmss}.txt
-```
-
 若 `outputSettings` 第一欄設定為：
 
 ```text
