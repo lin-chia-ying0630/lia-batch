@@ -117,10 +117,19 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
             settings.add(LiaReportOutputSettingDto.builder()
                     .outputFileName(value(row, headers, "outputFileName"))
                     .outputType(outputType)
+                    .dataSelectType(outputDataSelectType(row, headers))
                     .zipPassword(value(row, headers, "zipPassword"))
                     .settingDesc(value(row, headers, "settingDesc"))
                     .build());
         }
+    }
+
+    private String outputDataSelectType(Row row, Map<String, Integer> headers) {
+        String value = optionalValue(row, headers, "dataSelectType");
+        if (!isBlank(value)) {
+            return value;
+        }
+        return optionalValueByHeaderPrefix(row, headers, "choose");
     }
 
     private String toOutputTypes(List<LiaReportOutputSettingDto> outputSettings) {
@@ -168,6 +177,23 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
             throw new IllegalArgumentException("規格檔缺少欄位：" + name);
         }
         return dataFormatter.formatCellValue(row.getCell(index)).trim();
+    }
+
+    private String optionalValue(Row row, Map<String, Integer> headers, String name) {
+        Integer index = headers.get(name);
+        if (index == null) {
+            return "";
+        }
+        return dataFormatter.formatCellValue(row.getCell(index)).trim();
+    }
+
+    private String optionalValueByHeaderPrefix(Row row, Map<String, Integer> headers, String headerPrefix) {
+        return headers.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(headerPrefix))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .map(index -> dataFormatter.formatCellValue(row.getCell(index)).trim())
+                .orElse("");
     }
 
     private Integer toInt(String value) {

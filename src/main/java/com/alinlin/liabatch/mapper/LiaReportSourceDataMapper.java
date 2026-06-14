@@ -1,11 +1,14 @@
 package com.alinlin.liabatch.mapper;
 
-import com.alinlin.liabatch.dto.CustomerDto;
-import com.alinlin.liabatch.dto.PaymentDto;
-import com.alinlin.liabatch.dto.PolicyDto;
-import com.alinlin.liabatch.dto.ProductDto;
+import com.alinlin.liabatch.entity.CustomerDto;
+import com.alinlin.liabatch.entity.PaymentDto;
+import com.alinlin.liabatch.entity.PolicyDto;
+import com.alinlin.liabatch.entity.ProductOrderDto;
+import com.alinlin.liabatch.entity.ProductDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * LIA通報來源資料 MyBatis Mapper。
@@ -18,7 +21,11 @@ public interface LiaReportSourceDataMapper {
 
     CustomerDto selectCustomerByPolicyId(@Param("policyId") Long policyId);
 
+    ProductOrderDto selectFirstProductOrder(@Param("policyNo") String policyNo, @Param("policySeq") String policySeq);
+
+    List<ProductOrderDto> selectProductOrders(@Param("policyNo") String policyNo, @Param("policySeq") String policySeq);
+
     ProductDto selectProductByProductCode(@Param("productCode") String productCode);
 
-    PaymentDto selectPayment();
+    PaymentDto selectPaymentByPolicyId(@Param("policyId") Long policyId);
 }

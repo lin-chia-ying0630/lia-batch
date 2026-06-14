@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * LIA通報 TXT 輸出工具。
@@ -18,12 +19,20 @@ public class LiaReportTxtOutputUtil {
         return (line + System.lineSeparator()).getBytes(TXT_CHARSET);
     }
 
+    public byte[] toBytes(List<String> lines) {
+        return (String.join(System.lineSeparator(), lines) + System.lineSeparator()).getBytes(TXT_CHARSET);
+    }
+
     public void write(Path output, String line) {
+        write(output, List.of(line));
+    }
+
+    public void write(Path output, List<String> lines) {
         try {
             if (output.getParent() != null) {
                 Files.createDirectories(output.getParent());
             }
-            Files.write(output, toBytes(line));
+            Files.write(output, toBytes(lines));
         } catch (IOException e) {
             throw new IllegalStateException("輸出LIA通報TXT檔失敗：" + output, e);
         }

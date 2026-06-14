@@ -44,17 +44,34 @@ CREATE TABLE IF NOT EXISTS lia_product (
     KEY idx_lia_product_active (active_flag, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA商品資料';
 
+CREATE TABLE IF NOT EXISTS lia_product_order (
+    product_order_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '商品訂單流水號',
+    policy_no VARCHAR(15) NOT NULL COMMENT '保單號碼',
+    policy_seq VARCHAR(5) NOT NULL COMMENT '保單編號序號',
+    product_order_no INT NOT NULL COMMENT '商品順序，從1開始依序排列',
+    product_code VARCHAR(20) NOT NULL COMMENT '商品代號',
+    active_flag CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '有效註記',
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最後更新時間',
+    PRIMARY KEY (product_order_id),
+    UNIQUE KEY uk_lia_product_order_policy (policy_no, policy_seq, product_order_no),
+    KEY idx_lia_product_order_product (product_code),
+    KEY idx_lia_product_order_active (active_flag, updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA商品訂單';
+
 CREATE TABLE IF NOT EXISTS lia_payment (
     payment_id BIGINT NOT NULL AUTO_INCREMENT COMMENT '繳費資料流水號',
+    policy_id BIGINT NOT NULL COMMENT '保單資料流水號，對應lia_policy.policy_id',
     pay_period_type VARCHAR(1) NOT NULL COMMENT '繳費期間別',
     pay_period VARCHAR(3) NOT NULL COMMENT '繳費期間',
     active_flag CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '有效註記',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最後更新時間',
     PRIMARY KEY (payment_id),
+    KEY idx_lia_payment_policy (policy_id, active_flag, updated_at),
     KEY idx_lia_payment_active (active_flag, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='LIA繳費資料';
 
 ALTER TABLE lia_policy CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE lia_customer CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE lia_product CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE lia_product_order CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE lia_payment CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

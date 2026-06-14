@@ -40,7 +40,10 @@
 - Mapper XML 放在 `src/main/resources/mapper`。
 - SQL 放在 XML，不放在 service class。
 - `LiaReportSourceDataMapper.xml` 使用下列 MySQL 資料表：
-  `lia_policy`、`lia_customer`、`lia_product`、`lia_payment`。
+  `lia_policy`、`lia_customer`、`lia_product_order`、`lia_product`、`lia_payment`。
+- 一張保單可有多筆 `lia_product_order`；程式以 `ProductOrderDto` 承接商品訂單資料，產檔目前只取 `product_order_no=1` 的商品代碼。
+- `aaa` 檔案使用 `selectReportData()` 產生單筆通報資料。
+- `bbb` 檔案使用 `selectProductOrderReportData()` 依同一張保單的多筆 `lia_product_order` 產生多筆資料列。
 - 執行時資料來源固定使用 MySQL/MyBatis。
 
 ## MySQL 建檔
@@ -49,6 +52,8 @@
 
 - `src/main/resources/db/mysql/schema.sql`
 - `src/main/resources/db/mysql/insert-sample-data.sql`
+- `src/main/resources/db/mysql/alter-payment-policy-id.sql`
+- `src/main/resources/db/mysql/alter-product-order.sql`
 
 執行範例：
 
@@ -73,6 +78,7 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表以一列代表一組輸出檔：
 
 - 第一欄 `outputFileName`：產生的檔名基底，例如 `aaa`，系統會依格式產生 `aaa.txt`、`aaa.zip`、`aaa.xlsx`。
+- `choose`：填 `1` 表示使用 `selectReportData()` 產生單筆資料；填 `2` 表示使用 `selectProductOrderReportData()` 依商品訂單產生多筆資料。
 - `outputFileTxt`：填 `V` 表示產生 TXT。
 - `outputFileExcel`：填 `V` 表示產生 Excel。
 - `outputFileZip`：填 `V` 表示產生 ZIP。

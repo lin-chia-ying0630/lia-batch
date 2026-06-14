@@ -4,7 +4,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.alinlin.liabatch.mapper.LiaReportSourceDataMapper">
 
-    <select id="selectPolicy" resultType="com.alinlin.liabatch.dto.PolicyDto">
+    <select id="selectPolicy" resultType="com.alinlin.liabatch.entity.PolicyDto">
         SELECT
             p.policy_id,
             p.company_code,
@@ -17,15 +17,12 @@
         INNER JOIN lia_customer c
             ON c.active_flag = 'Y'
            AND c.customer_id COLLATE utf8mb4_unicode_ci = CAST(p.policy_id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
-        INNER JOIN lia_product pr
-            ON pr.active_flag = 'Y'
-           AND pr.product_code COLLATE utf8mb4_unicode_ci = p.product_code COLLATE utf8mb4_unicode_ci
         WHERE p.active_flag = 'Y'
         ORDER BY p.updated_at DESC, p.policy_no
         LIMIT 1
     </select>
 
-    <select id="selectCustomerByPolicyId" resultType="com.alinlin.liabatch.dto.CustomerDto">
+    <select id="selectCustomerByPolicyId" resultType="com.alinlin.liabatch.entity.CustomerDto">
         SELECT
             customer_id,
             customer_name,
@@ -39,7 +36,37 @@
         LIMIT 1
     </select>
 
-    <select id="selectProductByProductCode" resultType="com.alinlin.liabatch.dto.ProductDto">
+    <select id="selectFirstProductOrder" resultType="com.alinlin.liabatch.entity.ProductOrderDto">
+        SELECT
+            product_order_id,
+            policy_no,
+            policy_seq,
+            product_order_no,
+            product_code
+        FROM lia_product_order
+        WHERE active_flag = 'Y'
+          AND product_order_no = 1
+          AND policy_no COLLATE utf8mb4_unicode_ci = CAST(#{policyNo} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+          AND policy_seq COLLATE utf8mb4_unicode_ci = CAST(#{policySeq} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+        ORDER BY updated_at DESC, product_order_id
+        LIMIT 1
+    </select>
+
+    <select id="selectProductOrders" resultType="com.alinlin.liabatch.entity.ProductOrderDto">
+        SELECT
+            product_order_id,
+            policy_no,
+            policy_seq,
+            product_order_no,
+            product_code
+        FROM lia_product_order
+        WHERE active_flag = 'Y'
+          AND policy_no COLLATE utf8mb4_unicode_ci = CAST(#{policyNo} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+          AND policy_seq COLLATE utf8mb4_unicode_ci = CAST(#{policySeq} AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci
+        ORDER BY product_order_no, product_order_id
+    </select>
+
+    <select id="selectProductByProductCode" resultType="com.alinlin.liabatch.entity.ProductDto">
         SELECT
             product_code,
             product_name
@@ -50,12 +77,14 @@
         LIMIT 1
     </select>
 
-    <select id="selectPayment" resultType="com.alinlin.liabatch.dto.PaymentDto">
+    <select id="selectPaymentByPolicyId" resultType="com.alinlin.liabatch.entity.PaymentDto">
         SELECT
+            policy_id,
             pay_period_type,
             pay_period
         FROM lia_payment
         WHERE active_flag = 'Y'
+          AND policy_id = #{policyId}
         ORDER BY updated_at DESC, payment_id
         LIMIT 1
     </select>

@@ -32,9 +32,13 @@ public class LiaReportExcelOutputUtil {
     }
 
     public byte[] toBytes(String sheetName, LiaReportData reportData, List<LiaFieldSpecDto> specs) {
+        return toBytes(sheetName, List.of(reportData), specs);
+    }
+
+    public byte[] toBytes(String sheetName, List<LiaReportData> reportDataList, List<LiaFieldSpecDto> specs) {
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            writeWorkbook(workbook, sheetName, reportData, specs);
+            writeWorkbook(workbook, sheetName, reportDataList, specs);
             workbook.write(outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -43,13 +47,17 @@ public class LiaReportExcelOutputUtil {
     }
 
     public void write(Path excelPath, LiaReportData reportData, List<LiaFieldSpecDto> specs) {
+        write(excelPath, List.of(reportData), specs);
+    }
+
+    public void write(Path excelPath, List<LiaReportData> reportDataList, List<LiaFieldSpecDto> specs) {
         try {
             if (excelPath.getParent() != null) {
                 Files.createDirectories(excelPath.getParent());
             }
             try (Workbook workbook = new XSSFWorkbook();
                  OutputStream outputStream = Files.newOutputStream(excelPath)) {
-                writeWorkbook(workbook, sheetName(excelPath), reportData, specs);
+                writeWorkbook(workbook, sheetName(excelPath), reportDataList, specs);
                 workbook.write(outputStream);
             }
         } catch (IOException e) {
@@ -58,11 +66,15 @@ public class LiaReportExcelOutputUtil {
     }
 
     private void writeWorkbook(Workbook workbook, String sheetName, LiaReportData reportData, List<LiaFieldSpecDto> specs) {
+        writeWorkbook(workbook, sheetName, List.of(reportData), specs);
+    }
+
+    private void writeWorkbook(Workbook workbook, String sheetName, List<LiaReportData> reportDataList, List<LiaFieldSpecDto> specs) {
         List<LiaFieldSpecDto> sortedSpecs = sortedSpecs(specs);
         Sheet sheet = workbook.createSheet(safeSheetName(sheetName));
         CellStyle headerStyle = headerStyle(workbook);
         writeHeader(sheet, headerStyle, sortedSpecs);
-        writeData(sheet, reportData, sortedSpecs);
+        writeDataRows(sheet, reportDataList, sortedSpecs);
         resizeColumns(sheet, sortedSpecs.size());
     }
 
@@ -83,7 +95,17 @@ public class LiaReportExcelOutputUtil {
     }
 
     private void writeData(Sheet sheet, LiaReportData reportData, List<LiaFieldSpecDto> specs) {
-        Row dataRow = sheet.createRow(1);
+        writeData(sheet, 1, reportData, specs);
+    }
+
+    private void writeDataRows(Sheet sheet, List<LiaReportData> reportDataList, List<LiaFieldSpecDto> specs) {
+        for (int rowIndex = 0; rowIndex < reportDataList.size(); rowIndex++) {
+            writeData(sheet, rowIndex + 1, reportDataList.get(rowIndex), specs);
+        }
+    }
+
+    private void writeData(Sheet sheet, int rowNumber, LiaReportData reportData, List<LiaFieldSpecDto> specs) {
+        Row dataRow = sheet.createRow(rowNumber);
         for (int i = 0; i < specs.size(); i++) {
             dataRow.createCell(i).setCellValue(valueResolver.resolveFormattedValue(reportData, specs.get(i)));
         }

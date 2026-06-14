@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class LiaReportOutputSettingDto {
     private String outputFileName;
     private String outputType;
+    private String dataSelectType;
     private String zipPassword;
     private String settingDesc;
 }

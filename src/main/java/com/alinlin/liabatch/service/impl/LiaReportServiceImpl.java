@@ -38,6 +38,9 @@ import java.util.stream.Collectors;
 @Service
 public class LiaReportServiceImpl implements LiaReportService {
 
+    private static final String SELECT_REPORT_DATA = "1";
+    private static final String SELECT_PRODUCT_ORDER_REPORT_DATA = "2";
+
     private final String specFile;
     private final LiaReportExcelSpecReader excelSpecReader;
     private final LiaReportDataRepository reportDataRepository;
@@ -91,8 +94,9 @@ public class LiaReportServiceImpl implements LiaReportService {
 
             Set<LiaReportOutputType> outputTypes = outputTypes(outputSettings, commandOutputTypes);
             String resolvedZipPassword = choose(zipPassword, zipPassword(outputSettings));
-            String line = outputTypes.contains(LiaReportOutputType.TXT) || outputTypes.contains(LiaReportOutputType.ZIP)
-                    ? new FixedLengthTextBuilder().buildLine(reportData, fileSpecs)
+            List<LiaReportData> reportDataList = reportDataList(outputSettings, reportData);
+            List<String> lines = outputTypes.contains(LiaReportOutputType.TXT) || outputTypes.contains(LiaReportOutputType.ZIP)
+                    ? buildLines(reportDataList, fileSpecs)
                     : null;
 
             Path plannedTxtPath = outputDirectory.resolve(withExtension(outputFileName, ".txt"));
@@ -100,18 +104,18 @@ public class LiaReportServiceImpl implements LiaReportService {
 
             if (outputTypes.contains(LiaReportOutputType.TXT)) {
                 Path writingPath = plannedTxtPath.resolveSibling(plannedTxtPath.getFileName() + ".writing");
-                txtOutputUtil.write(writingPath, line);
+                txtOutputUtil.write(writingPath, lines);
                 txtPaths.add(publish(writingPath, plannedTxtPath));
             }
 
             if (outputTypes.contains(LiaReportOutputType.EXCEL)) {
-                excelOutputUtil.write(plannedExcelPath, reportData, fileSpecs);
+                excelOutputUtil.write(plannedExcelPath, reportDataList, fileSpecs);
                 excelPaths.add(plannedExcelPath);
             }
 
             if (outputTypes.contains(LiaReportOutputType.ZIP)) {
                 Path zipPath = outputDirectory.resolve(withExtension(outputFileName, ".zip"));
-                zipOutputUtil.write(zipPath, zipEntries(plannedTxtPath, plannedExcelPath, reportData, fileSpecs, line), resolvedZipPassword);
+                zipOutputUtil.write(zipPath, zipEntries(plannedTxtPath, plannedExcelPath, reportDataList, fileSpecs, lines), resolvedZipPassword);
                 zipPaths.add(zipPath);
             }
         }
@@ -147,14 +151,40 @@ public class LiaReportServiceImpl implements LiaReportService {
     private Map<String, byte[]> zipEntries(
             Path txtPath,
             Path excelPath,
-            LiaReportData reportData,
+            List<LiaReportData> reportDataList,
             List<LiaFieldSpecDto> specs,
-            String line
+            List<String> lines
     ) {
         Map<String, byte[]> entries = new LinkedHashMap<>();
-        entries.put(txtPath.getFileName().toString(), txtOutputUtil.toBytes(line));
-        entries.put(excelPath.getFileName().toString(), excelOutputUtil.toBytes(sheetName(excelPath), reportData, specs));
+        entries.put(txtPath.getFileName().toString(), txtOutputUtil.toBytes(lines));
+        entries.put(excelPath.getFileName().toString(), excelOutputUtil.toBytes(sheetName(excelPath), reportDataList, specs));
         return entries;
+    }
+
+    private List<LiaReportData> reportDataList(List<LiaReportOutputSettingDto> outputSettings, LiaReportData defaultReportData) {
+        String dataSelectType = dataSelectType(outputSettings);
+        if (SELECT_PRODUCT_ORDER_REPORT_DATA.equals(dataSelectType)) {
+            return reportDataRepository.selectProductOrderReportData();
+        }
+        if (!SELECT_REPORT_DATA.equals(dataSelectType)) {
+            throw new IllegalArgumentException("outputSettings.dataSelectType 只支援 1 或 2，目前值：" + dataSelectType);
+        }
+        return List.of(defaultReportData);
+    }
+
+    private String dataSelectType(List<LiaReportOutputSettingDto> outputSettings) {
+        return outputSettings.stream()
+                .map(LiaReportOutputSettingDto::getDataSelectType)
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .orElse(SELECT_REPORT_DATA);
+    }
+
+    private List<String> buildLines(List<LiaReportData> reportDataList, List<LiaFieldSpecDto> fileSpecs) {
+        FixedLengthTextBuilder textBuilder = new FixedLengthTextBuilder();
+        return reportDataList.stream()
+                .map(reportData -> textBuilder.buildLine(reportData, fileSpecs))
+                .toList();
     }
 
     private String withExtension(String fileName, String extension) {

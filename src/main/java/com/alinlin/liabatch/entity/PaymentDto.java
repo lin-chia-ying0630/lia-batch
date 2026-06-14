@@ -1,4 +1,4 @@
-package com.alinlin.liabatch.dto;
+package com.alinlin.liabatch.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentDto {
+    private Long policyId;
     private String payPeriodType;
     private String payPeriod;
 }

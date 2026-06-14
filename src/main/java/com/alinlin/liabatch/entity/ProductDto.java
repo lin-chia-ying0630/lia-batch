@@ -1,4 +1,4 @@
-package com.alinlin.liabatch.dto;
+package com.alinlin.liabatch.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

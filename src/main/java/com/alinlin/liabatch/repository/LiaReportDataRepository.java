@@ -2,6 +2,8 @@ package com.alinlin.liabatch.repository;
 
 import com.alinlin.liabatch.dto.LiaReportData;
 
+import java.util.List;
+
 /**
  * LIA通報資料存取介面。
  * <p>
@@ -9,4 +11,6 @@ import com.alinlin.liabatch.dto.LiaReportData;
  */
 public interface LiaReportDataRepository {
     LiaReportData selectReportData();
+
+    List<LiaReportData> selectProductOrderReportData();
 }

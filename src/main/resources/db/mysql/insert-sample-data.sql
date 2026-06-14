@@ -56,20 +56,53 @@ INSERT INTO lia_product (
     product_code,
     product_name,
     active_flag
-) VALUES (
+) VALUES
+(
     'P001',
     '終身壽險商品',
+    'Y'
+),
+(
+    'P002',
+    '醫療保險商品',
     'Y'
 ) ON DUPLICATE KEY UPDATE
     product_name = VALUES(product_name),
     active_flag = VALUES(active_flag),
     updated_at = CURRENT_TIMESTAMP;
 
+INSERT INTO lia_product_order (
+    policy_no,
+    policy_seq,
+    product_order_no,
+    product_code,
+    active_flag
+) VALUES
+(
+    'POL123456789',
+    '00001',
+    1,
+    'P001',
+    'Y'
+),
+(
+    'POL123456789',
+    '00001',
+    2,
+    'P002',
+    'Y'
+) ON DUPLICATE KEY UPDATE
+    product_code = VALUES(product_code),
+    active_flag = VALUES(active_flag),
+    updated_at = CURRENT_TIMESTAMP;
+
 INSERT INTO lia_payment (
+    policy_id,
     pay_period_type,
     pay_period,
     active_flag
 ) VALUES (
+    1,
     '1',
     '020',
     'Y'

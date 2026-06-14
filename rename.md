@@ -5,6 +5,7 @@
 批次產生 LIA 通報檔時，會先寫入 `.writing` 暫存檔，確認寫入成功後，才發布為正式 TXT 檔。
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表會決定要產生哪些檔案，以及每一種檔案的檔名。
 第一欄 `outputFileName` 是檔名基底，例如 `aaa`，系統會依輸出格式產生 `aaa.txt`、`aaa.zip`、`aaa.xlsx`。
+`choose` 欄位填 `1` 代表使用 `selectReportData()`，填 `2` 代表使用 `selectProductOrderReportData()`。
 `outputFileTxt`、`outputFileExcel`、`outputFileZip` 欄位填 `V` 才會產生對應檔案。
 第一張工作表 `outputFileDetail` 也有 `outputFileName`，用來對應 `outputSettings`，因此可以設定多組檔案與各自欄位。
 `outputFileDetail` 的 `sourceFile` 與 `sourceField` 可以同時空白；若同時空白，系統會使用 `fixedValue` 固定值欄位。
@@ -63,8 +64,8 @@ target/out/aaa.xlsx
 `lia-report-spec.xlsx` 的 `outputSettings` 可設定：
 
 ```text
-outputFileName | outputFileTxt | outputFileExcel | outputFileZip | zipPassword | settingDesc
-aaa            | V             | V               | V             |             | 固定長度TXT通報檔；填V才產生
+outputFileName | choose | outputFileTxt | outputFileExcel | outputFileZip | zipPassword | settingDesc
+aaa            | 1      | V             | V               | V             |             | 固定長度TXT通報檔；填V才產生
 ```
 
 `outputFileTxt`、`outputFileExcel`、`outputFileZip` 填 `V` 表示產生，空白表示不產生。
