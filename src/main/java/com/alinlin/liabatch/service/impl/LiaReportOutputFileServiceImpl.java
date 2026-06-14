@@ -41,7 +41,8 @@ public class LiaReportOutputFileServiceImpl implements LiaReportOutputFileServic
         }
     }
 
-    private Path targetPath(String outputArg, LiaReportData reportData) {
+    @Override
+    public Path targetPath(String outputArg, LiaReportData reportData) {
         Path output = Path.of(outputArg);
         if (looksLikeDirectory(outputArg)) {
             return output.resolve(defaultFileName(reportData));

@@ -1,6 +1,8 @@
 package com.alinlin.liabatch.service.impl;
 
 import com.alinlin.liabatch.dto.LiaFieldSpecDto;
+import com.alinlin.liabatch.dto.LiaReportOutputSettingDto;
+import com.alinlin.liabatch.dto.LiaReportSpecDto;
 import com.alinlin.liabatch.service.LiaReportExcelSpecReader;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -19,7 +21,7 @@ import java.util.Map;
 /**
  * LIA通報 Excel 規格讀取器實作。
  * <p>
- * 使用 Apache POI 讀取 classpath 內的 .xlsx 或 .xls 規格檔，並轉成 LiaFieldSpecDto 清單。
+ * 使用 Apache POI 讀取 classpath 內的 .xlsx 或 .xls 規格檔，並轉成欄位規格與輸出設定。
  */
 @Component
 public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
@@ -27,21 +29,32 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
     private final DataFormatter dataFormatter = new DataFormatter();
 
     @Override
-    public List<LiaFieldSpecDto> read(String classpathLocation) {
+    public LiaReportSpecDto read(String classpathLocation) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(classpathLocation)) {
             if (inputStream == null) {
                 throw new IllegalArgumentException("找不到規格檔：" + classpathLocation);
             }
 
             try (Workbook workbook = WorkbookFactory.create(inputStream)) {
-                return parseSheet(workbook.getSheetAt(0));
+                List<LiaReportOutputSettingDto> outputSettings = parseOutputSettings(workbook.getSheet("outputSettings"));
+                return LiaReportSpecDto.builder()
+                        .fieldSpecs(parseFieldSpecSheet(fieldSpecSheet(workbook)))
+                        .outputTypes(toOutputTypes(outputSettings))
+                        .zipPassword(zipPassword(outputSettings))
+                        .outputSettings(outputSettings)
+                        .build();
             }
         } catch (IOException e) {
             throw new IllegalStateException("讀取規格檔失敗：" + classpathLocation, e);
         }
     }
 
-    private List<LiaFieldSpecDto> parseSheet(Sheet sheet) {
+    private Sheet fieldSpecSheet(Workbook workbook) {
+        Sheet sheet = workbook.getSheet("outputFileDetail");
+        return sheet == null ? workbook.getSheetAt(0) : sheet;
+    }
+
+    private List<LiaFieldSpecDto> parseFieldSpecSheet(Sheet sheet) {
         Row headerRow = sheet.getRow(0);
         if (headerRow == null) {
             return List.of();
@@ -56,6 +69,7 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
             }
 
             specs.add(LiaFieldSpecDto.builder()
+                    .outputFileName(value(row, headers, "outputFileName"))
                     .sortNo(toInt(value(row, headers, "sortNo")))
                     .targetField(value(row, headers, "targetField"))
                     .targetDesc(value(row, headers, "targetDesc"))
@@ -65,11 +79,76 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
                     .dataType(value(row, headers, "dataType"))
                     .sourceFile(value(row, headers, "sourceFile"))
                     .sourceField(value(row, headers, "sourceField"))
+                    .fixedValue(value(row, headers, "fixedValue"))
                     .required(value(row, headers, "required"))
-                    .formatRule(value(row, headers, "formatRule"))
+                    .decimalPlaces(toInt(value(row, headers, "decimalPlaces")))
                     .build());
         }
         return specs;
+    }
+
+    private List<LiaReportOutputSettingDto> parseOutputSettings(Sheet sheet) {
+        if (sheet == null || sheet.getRow(0) == null) {
+            return List.of();
+        }
+
+        Map<String, Integer> headers = toHeaderMap(sheet.getRow(0));
+        List<LiaReportOutputSettingDto> settings = new ArrayList<>();
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) {
+                continue;
+            }
+            addOutputSetting(settings, row, headers, "outputFileTxt", "txt");
+            addOutputSetting(settings, row, headers, "outputFileZip", "zip");
+            addOutputSetting(settings, row, headers, "outputFileExcel", "excel");
+        }
+        return settings;
+    }
+
+    private void addOutputSetting(
+            List<LiaReportOutputSettingDto> settings,
+            Row row,
+            Map<String, Integer> headers,
+            String enabledColumn,
+            String outputType
+    ) {
+        if (isEnabled(value(row, headers, enabledColumn))) {
+            settings.add(LiaReportOutputSettingDto.builder()
+                    .outputFileName(value(row, headers, "outputFileName"))
+                    .outputType(outputType)
+                    .zipPassword(value(row, headers, "zipPassword"))
+                    .settingDesc(value(row, headers, "settingDesc"))
+                    .build());
+        }
+    }
+
+    private String toOutputTypes(List<LiaReportOutputSettingDto> outputSettings) {
+        if (outputSettings.isEmpty()) {
+            return "txt,excel";
+        }
+        String outputTypes = outputSettings.stream()
+                .map(LiaReportOutputSettingDto::getOutputType)
+                .reduce((left, right) -> left + "," + right)
+                .orElse("");
+        return outputTypes;
+    }
+
+    private String zipPassword(List<LiaReportOutputSettingDto> outputSettings) {
+        return outputSettings.stream()
+                .filter(setting -> "zip".equalsIgnoreCase(setting.getOutputType()))
+                .map(LiaReportOutputSettingDto::getZipPassword)
+                .filter(password -> !isBlank(password))
+                .findFirst()
+                .orElse("");
+    }
+
+    private boolean isEnabled(String value) {
+        return "V".equalsIgnoreCase(value)
+                || "Y".equalsIgnoreCase(value)
+                || "YES".equalsIgnoreCase(value)
+                || "TRUE".equalsIgnoreCase(value)
+                || "1".equals(value);
     }
 
     private Map<String, Integer> toHeaderMap(Row headerRow) {

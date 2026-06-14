@@ -8,13 +8,14 @@ import lombok.NoArgsConstructor;
 /**
  * LIA通報欄位規格 DTO。
  * <p>
- * 對應 Excel 規格檔的每一列，描述固定長度 TXT 欄位位置、長度、資料型態與資料來源。
+ * 對應 Excel 規格檔 outputFileDetail 的每一列，描述輸出檔名、固定長度 TXT 欄位位置、長度、資料型態、小數位數、資料來源與固定值。
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LiaFieldSpecDto {
+    private String outputFileName;
     private Integer sortNo;
     private String targetField;
     private String targetDesc;
@@ -24,6 +25,7 @@ public class LiaFieldSpecDto {
     private String dataType;
     private String sourceFile;
     private String sourceField;
+    private String fixedValue;
     private String required;
-    private String formatRule;
+    private Integer decimalPlaces;
 }

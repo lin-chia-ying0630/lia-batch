@@ -1,10 +1,9 @@
 package com.alinlin.liabatch.controller;
 
+import com.alinlin.liabatch.dto.LiaReportGenerateResult;
 import com.alinlin.liabatch.service.LiaReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.nio.file.Path;
 
 /**
  * LIA通報批次 Controller。
@@ -22,8 +21,14 @@ public class LiaReportBatchController {
     }
 
     public void run(String[] args) {
-        Path output = liaReportService.generate(readOutputArg(args));
-        System.out.println("LIA通報檔輸出完成：" + output.toAbsolutePath());
+        LiaReportGenerateResult result = liaReportService.generate(
+                readOutputArg(args),
+                readOutputTypesArg(args),
+                readZipPasswordArg(args)
+        );
+        result.getTxtPaths().forEach(path -> System.out.println("LIA通報TXT輸出完成：" + path.toAbsolutePath()));
+        result.getExcelPaths().forEach(path -> System.out.println("LIA通報Excel輸出完成：" + path.toAbsolutePath()));
+        result.getZipPaths().forEach(path -> System.out.println("LIA通報ZIP輸出完成：" + path.toAbsolutePath()));
     }
 
     private String readOutputArg(String[] args) {
@@ -33,5 +38,23 @@ public class LiaReportBatchController {
             }
         }
         return "target/lia-report.txt";
+    }
+
+    private String readOutputTypesArg(String[] args) {
+        for (String arg : args) {
+            if (arg.startsWith("--output-types=")) {
+                return arg.substring("--output-types=".length());
+            }
+        }
+        return "";
+    }
+
+    private String readZipPasswordArg(String[] args) {
+        for (String arg : args) {
+            if (arg.startsWith("--zip-password=")) {
+                return arg.substring("--zip-password=".length());
+            }
+        }
+        return "";
     }
 }

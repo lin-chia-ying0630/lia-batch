@@ -4,6 +4,8 @@ import com.alinlin.liabatch.dto.LiaFieldSpecDto;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * LIA通報規格檢核工具。
@@ -49,6 +51,15 @@ public final class SpecValidator {
         }
     }
 
+    public static void validateByOutputFile(List<LiaFieldSpecDto> specs) {
+        Map<String, List<LiaFieldSpecDto>> specsByOutputFile = specs.stream()
+                .collect(Collectors.groupingBy(spec -> blankToDefault(spec.getOutputFileName())));
+
+        for (List<LiaFieldSpecDto> fileSpecs : specsByOutputFile.values()) {
+            validate(fileSpecs);
+        }
+    }
+
     private static void validateRequired(LiaFieldSpecDto spec) {
         if (spec.getStartPos() == null || spec.getEndPos() == null || spec.getLength() == null) {
             throw new IllegalArgumentException("欄位起訖或長度不可為空：" + spec.getTargetField());
@@ -56,8 +67,8 @@ public final class SpecValidator {
         if (spec.getStartPos() <= 0 || spec.getEndPos() < spec.getStartPos() || spec.getLength() <= 0) {
             throw new IllegalArgumentException("欄位起訖或長度設定錯誤：" + spec.getTargetField());
         }
-        if (isBlank(spec.getSourceFile()) || isBlank(spec.getSourceField())) {
-            throw new IllegalArgumentException("來源設定不可為空：" + spec.getTargetField());
+        if (hasOnlyOneSourceColumn(spec)) {
+            throw new IllegalArgumentException("sourceFile/sourceField 必須同時填寫或同時空白：" + spec.getTargetField());
         }
         if (isBlank(spec.getDataType())) {
             throw new IllegalArgumentException("dataType 不可為空：" + spec.getTargetField());
@@ -69,5 +80,13 @@ public final class SpecValidator {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private static boolean hasOnlyOneSourceColumn(LiaFieldSpecDto spec) {
+        return isBlank(spec.getSourceFile()) != isBlank(spec.getSourceField());
+    }
+
+    private static String blankToDefault(String value) {
+        return isBlank(value) ? "__DEFAULT__" : value.trim();
     }
 }

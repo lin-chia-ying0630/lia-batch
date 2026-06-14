@@ -3,18 +3,17 @@ package com.alinlin.liabatch.util;
 import com.alinlin.liabatch.dto.LiaFieldSpecDto;
 import com.alinlin.liabatch.dto.LiaReportData;
 
-import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * 固定長度文字產生器。
  * <p>
- * 依 LiaFieldSpecDto 指定的 sourceFile/sourceField 從 LiaReportData 取值，套用格式與 dataType 補位後組成一行 TXT。
+ * 依 LiaFieldSpecDto 指定的 sourceFile/sourceField 或 fixedValue 取值，套用格式與 dataType 補位後組成一行 TXT。
  */
 public class FixedLengthTextBuilder {
+
+    private final LiaReportFieldValueResolver valueResolver = new LiaReportFieldValueResolver();
 
     public String buildLine(LiaReportData reportData, List<LiaFieldSpecDto> specs) {
         int lineLength = specs.stream()
@@ -26,13 +25,7 @@ public class FixedLengthTextBuilder {
         for (LiaFieldSpecDto spec : specs.stream()
                 .sorted(Comparator.comparing(LiaFieldSpecDto::getStartPos))
                 .toList()) {
-            Object sourceObject = reportData.sourceObject(spec.getSourceFile());
-            if (sourceObject == null) {
-                throw new IllegalArgumentException("找不到來源檔案/來源物件：" + spec.getSourceFile());
-            }
-
-            Object rawValue = getFieldValue(sourceObject, spec.getSourceField());
-            String fixedValue = padValue(formatValue(rawValue, spec), spec);
+            String fixedValue = padValue(valueResolver.resolveFormattedValue(reportData, spec), spec);
 
             int startIndex = spec.getStartPos() - 1;
             for (int i = 0; i < fixedValue.length(); i++) {
@@ -41,35 +34,6 @@ public class FixedLengthTextBuilder {
         }
 
         return new String(line);
-    }
-
-    private Object getFieldValue(Object sourceObject, String fieldName) {
-        try {
-            Field field = sourceObject.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return field.get(sourceObject);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(
-                    "來源物件 " + sourceObject.getClass().getSimpleName() + " 找不到欄位：" + fieldName,
-                    e
-            );
-        }
-    }
-
-    private String formatValue(Object rawValue, LiaFieldSpecDto spec) {
-        if (rawValue == null) {
-            return "";
-        }
-        if ("AMOUNT".equalsIgnoreCase(spec.getFormatRule())) {
-            if (rawValue instanceof BigDecimal amount) {
-                return amount.setScale(0, RoundingMode.HALF_UP).toPlainString();
-            }
-            return new BigDecimal(rawValue.toString()).setScale(0, RoundingMode.HALF_UP).toPlainString();
-        }
-        if ("NUMBER".equalsIgnoreCase(spec.getFormatRule()) || "9".equalsIgnoreCase(spec.getDataType())) {
-            return rawValue.toString().replaceAll("[^0-9]", "");
-        }
-        return rawValue.toString().trim();
     }
 
     private String padValue(String value, LiaFieldSpecDto spec) {
