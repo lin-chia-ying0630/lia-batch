@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS lia_policy (
     policy_seq VARCHAR(5) NOT NULL COMMENT '保單編號序號',
     change_seq VARCHAR(5) NOT NULL COMMENT '異動序號',
     product_code VARCHAR(20) NOT NULL COMMENT '購買商品代號',
+    mop VARCHAR(10) NULL COMMENT '繳別/繳費方式代碼',
     insured_amount DECIMAL(18, 0) NOT NULL COMMENT '保險金額',
     active_flag CHAR(1) NOT NULL DEFAULT 'Y' COMMENT '有效註記',
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最後更新時間',

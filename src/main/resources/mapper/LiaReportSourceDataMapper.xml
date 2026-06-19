@@ -12,6 +12,7 @@
             p.policy_seq,
             p.change_seq,
             p.product_code,
+            p.mop,
             p.insured_amount
         FROM lia_policy p
         INNER JOIN lia_customer c

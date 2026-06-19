@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * LIA通報 Excel 輸出工具。
@@ -25,7 +26,15 @@ import java.util.List;
  */
 public class LiaReportExcelOutputUtil {
 
-    private final LiaReportFieldValueResolver valueResolver = new LiaReportFieldValueResolver();
+    private final LiaReportFieldValueResolver valueResolver;
+
+    public LiaReportExcelOutputUtil() {
+        this(Map.of());
+    }
+
+    public LiaReportExcelOutputUtil(Map<String, String> codeTable) {
+        this.valueResolver = new LiaReportFieldValueResolver(codeTable);
+    }
 
     public byte[] toBytes(LiaReportData reportData, List<LiaFieldSpecDto> specs) {
         return toBytes("LIA通報資料", reportData, specs);

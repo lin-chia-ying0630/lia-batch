@@ -29,10 +29,11 @@
 6. 組成 `LiaReportData`，包含 `policy`、`customer`、`product`、`payment`；公司代號等固定內容由 `fixedValue` 提供。
 7. 依 Excel 規格的 `sourceFile + sourceField` 從 `LiaReportData` 取值；若兩欄皆空白，改用 `fixedValue` 固定值。
 8. 依 `dataType` 與 `decimalPlaces` 格式化資料；`dataType=X` 表示靠左補空白，`dataType=9` 表示靠右補 `0`，`decimalPlaces` 表示數字欄位的小數位數。
-9. 依 `outputSettings` 工作表決定輸出格式與檔名，可輸出 TXT、ZIP、Excel 或複選輸出。
-10. 若輸出 TXT，先寫入 `.writing` 固定長度 TXT 暫存檔。
-11. TXT 寫入成功後，將 `.writing` 發布為正式 TXT 檔。
-12. 若輸出 Excel，產生 `.xlsx` 檢視檔，第一列表頭使用 Excel 規格中的中文欄位說明 `targetDesc`。
+9. 若 `outputFileDetail.relacepGroup` 或 `replaceGroup` 有填值，依 `codeTable` 將來源值由 `source_value` 轉成 `target_value`。
+10. 依 `outputSettings` 工作表決定輸出格式與檔名，可輸出 TXT、ZIP、Excel 或複選輸出。
+11. 若輸出 TXT，先寫入 `.writing` 固定長度 TXT 暫存檔。
+12. TXT 寫入成功後，將 `.writing` 發布為正式 TXT 檔。
+13. 若輸出 Excel，產生 `.xlsx` 檢視檔，第一列表頭使用 Excel 規格中的中文欄位說明 `targetDesc`。
 
 ## MyBatis 規則
 
@@ -74,6 +75,20 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 - `sourceFile` 與 `sourceField` 只能同時填或同時空白，不可只填其中一欄。
 - `fixedValue` 可空白；空白時仍會依 `dataType` 做補位。
 - 公司代號目前不查 DB，請在 `COMPANY_CODE` 欄位使用 `fixedValue=109`。
+
+## codeTable 規則
+
+`codeTable` 工作表用於代碼轉換，欄位如下：
+
+- `replaceGroup`：轉換群組，對應 `outputFileDetail` 的 `relacepGroup` 或 `replaceGroup`。
+- `sourceField`：來源欄位名稱，對應 `outputFileDetail.sourceField`。
+- `source_value`：來源資料查出的原始值。
+- `target_value`：實際輸出的轉換值。
+- `codeDesc`：轉換說明。
+
+當 `outputFileDetail` 某列有填 `relacepGroup` 或 `replaceGroup` 時，程式會用
+`replaceGroup + sourceField + source_value` 到 `codeTable` 找 `target_value`。
+找不到時不轉換，直接使用原始來源值輸出。
 
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表以一列代表一組輸出檔：
 

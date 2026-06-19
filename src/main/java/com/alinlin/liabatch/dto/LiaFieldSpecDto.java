@@ -25,6 +25,7 @@ public class LiaFieldSpecDto {
     private String dataType;
     private String sourceFile;
     private String sourceField;
+    private String replaceGroup;
     private String fixedValue;
     private String required;
     private Integer decimalPlaces;

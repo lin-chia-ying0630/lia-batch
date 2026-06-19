@@ -46,7 +46,6 @@ public class LiaReportServiceImpl implements LiaReportService {
     private final LiaReportDataRepository reportDataRepository;
     private final LiaReportOutputFileService outputFileService;
     private final LiaReportTxtOutputUtil txtOutputUtil = new LiaReportTxtOutputUtil();
-    private final LiaReportExcelOutputUtil excelOutputUtil = new LiaReportExcelOutputUtil();
     private final LiaReportZipOutputUtil zipOutputUtil = new LiaReportZipOutputUtil();
 
     @Autowired
@@ -72,6 +71,7 @@ public class LiaReportServiceImpl implements LiaReportService {
         Set<LiaReportOutputType> commandOutputTypes = outputTypesArg == null || outputTypesArg.isBlank()
                 ? Set.of()
                 : LiaReportOutputType.parse(outputTypesArg);
+        LiaReportExcelOutputUtil excelOutputUtil = new LiaReportExcelOutputUtil(reportSpec.getCodeTable());
         List<LiaFieldSpecDto> specs = reportSpec.getFieldSpecs();
         SpecValidator.validateByOutputFile(specs);
 
@@ -96,7 +96,7 @@ public class LiaReportServiceImpl implements LiaReportService {
             String resolvedZipPassword = choose(zipPassword, zipPassword(outputSettings));
             List<LiaReportData> reportDataList = reportDataList(outputSettings, reportData);
             List<String> lines = outputTypes.contains(LiaReportOutputType.TXT) || outputTypes.contains(LiaReportOutputType.ZIP)
-                    ? buildLines(reportDataList, fileSpecs)
+                    ? buildLines(reportDataList, fileSpecs, reportSpec.getCodeTable())
                     : null;
 
             Path plannedTxtPath = outputDirectory.resolve(withExtension(outputFileName, ".txt"));
@@ -115,7 +115,7 @@ public class LiaReportServiceImpl implements LiaReportService {
 
             if (outputTypes.contains(LiaReportOutputType.ZIP)) {
                 Path zipPath = outputDirectory.resolve(withExtension(outputFileName, ".zip"));
-                zipOutputUtil.write(zipPath, zipEntries(plannedTxtPath, plannedExcelPath, reportDataList, fileSpecs, lines), resolvedZipPassword);
+                zipOutputUtil.write(zipPath, zipEntries(plannedTxtPath, plannedExcelPath, reportDataList, fileSpecs, lines, excelOutputUtil), resolvedZipPassword);
                 zipPaths.add(zipPath);
             }
         }
@@ -153,7 +153,8 @@ public class LiaReportServiceImpl implements LiaReportService {
             Path excelPath,
             List<LiaReportData> reportDataList,
             List<LiaFieldSpecDto> specs,
-            List<String> lines
+            List<String> lines,
+            LiaReportExcelOutputUtil excelOutputUtil
     ) {
         Map<String, byte[]> entries = new LinkedHashMap<>();
         entries.put(txtPath.getFileName().toString(), txtOutputUtil.toBytes(lines));
@@ -180,8 +181,12 @@ public class LiaReportServiceImpl implements LiaReportService {
                 .orElse(SELECT_REPORT_DATA);
     }
 
-    private List<String> buildLines(List<LiaReportData> reportDataList, List<LiaFieldSpecDto> fileSpecs) {
-        FixedLengthTextBuilder textBuilder = new FixedLengthTextBuilder();
+    private List<String> buildLines(
+            List<LiaReportData> reportDataList,
+            List<LiaFieldSpecDto> fileSpecs,
+            Map<String, String> codeTable
+    ) {
+        FixedLengthTextBuilder textBuilder = new FixedLengthTextBuilder(codeTable);
         return reportDataList.stream()
                 .map(reportData -> textBuilder.buildLine(reportData, fileSpecs))
                 .toList();

@@ -6,6 +6,7 @@ import com.alinlin.liabatch.dto.LiaReportData;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 
 /**
  * LIA通報欄位取值工具。
@@ -14,9 +15,19 @@ import java.math.RoundingMode;
  */
 public class LiaReportFieldValueResolver {
 
+    private final Map<String, String> codeTable;
+
+    public LiaReportFieldValueResolver() {
+        this(Map.of());
+    }
+
+    public LiaReportFieldValueResolver(Map<String, String> codeTable) {
+        this.codeTable = codeTable == null ? Map.of() : codeTable;
+    }
+
     public String resolveFormattedValue(LiaReportData reportData, LiaFieldSpecDto spec) {
         if (isBlank(spec.getSourceFile()) && isBlank(spec.getSourceField())) {
-            return formatValue(spec.getFixedValue(), spec);
+            return formatValue(applyCodeTable(spec.getFixedValue(), spec), spec);
         }
 
         Object sourceObject = reportData.sourceObject(spec.getSourceFile());
@@ -24,7 +35,19 @@ public class LiaReportFieldValueResolver {
             throw new IllegalArgumentException("找不到來源檔案/來源物件：" + spec.getSourceFile());
         }
         Object rawValue = getFieldValue(sourceObject, spec.getSourceField());
-        return formatValue(rawValue, spec);
+        return formatValue(applyCodeTable(rawValue, spec), spec);
+    }
+
+    private Object applyCodeTable(Object rawValue, LiaFieldSpecDto spec) {
+        if (isBlank(spec.getReplaceGroup())) {
+            return rawValue;
+        }
+        String sourceValue = rawValue == null ? "" : rawValue.toString().trim();
+        String key = codeTableKey(spec.getReplaceGroup(), spec.getSourceField(), sourceValue);
+        if (!codeTable.containsKey(key)) {
+            return rawValue;
+        }
+        return codeTable.get(key);
     }
 
     private Object getFieldValue(Object sourceObject, String fieldName) {
@@ -65,5 +88,13 @@ public class LiaReportFieldValueResolver {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String codeTableKey(String replaceGroup, String sourceField, String sourceValue) {
+        return normalizeKeyPart(replaceGroup) + "|" + normalizeKeyPart(sourceField) + "|" + normalizeKeyPart(sourceValue);
+    }
+
+    private String normalizeKeyPart(String value) {
+        return value == null ? "" : value.trim();
     }
 }

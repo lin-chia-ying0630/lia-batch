@@ -1,5 +1,6 @@
 package com.alinlin.liabatch.service.impl;
 
+import com.alinlin.liabatch.dto.CodeTableDto;
 import com.alinlin.liabatch.dto.LiaFieldSpecDto;
 import com.alinlin.liabatch.dto.LiaReportOutputSettingDto;
 import com.alinlin.liabatch.dto.LiaReportSpecDto;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * LIA通報 Excel 規格讀取器實作。
@@ -37,11 +39,13 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
 
             try (Workbook workbook = WorkbookFactory.create(inputStream)) {
                 List<LiaReportOutputSettingDto> outputSettings = parseOutputSettings(workbook.getSheet("outputSettings"));
+                Map<String, String> codeTable = parseCodeTable(workbook.getSheet("codeTable"));
                 return LiaReportSpecDto.builder()
                         .fieldSpecs(parseFieldSpecSheet(fieldSpecSheet(workbook)))
                         .outputTypes(toOutputTypes(outputSettings))
                         .zipPassword(zipPassword(outputSettings))
                         .outputSettings(outputSettings)
+                        .codeTable(codeTable)
                         .build();
             }
         } catch (IOException e) {
@@ -79,12 +83,41 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
                     .dataType(value(row, headers, "dataType"))
                     .sourceFile(value(row, headers, "sourceFile"))
                     .sourceField(value(row, headers, "sourceField"))
+                    .replaceGroup(outputReplaceGroup(row, headers))
                     .fixedValue(value(row, headers, "fixedValue"))
                     .required(value(row, headers, "required"))
                     .decimalPlaces(toInt(value(row, headers, "decimalPlaces")))
                     .build());
         }
         return specs;
+    }
+
+    private Map<String, String> parseCodeTable(Sheet sheet) {
+        if (sheet == null || sheet.getRow(0) == null) {
+            return Map.of();
+        }
+
+        Map<String, Integer> headers = toHeaderMap(sheet.getRow(0));
+        List<CodeTableDto> rows = new ArrayList<>();
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null || isBlank(outputReplaceGroup(row, headers))) {
+                continue;
+            }
+            rows.add(CodeTableDto.builder()
+                    .replaceGroup(outputReplaceGroup(row, headers))
+                    .sourceField(valueByAliases(row, headers, "sourceField", "source_field"))
+                    .sourceValue(valueByAliases(row, headers, "sourceValue", "source_value"))
+                    .targetValue(valueByAliases(row, headers, "targetValue", "target_value"))
+                    .codeDesc(optionalValue(row, headers, "codeDesc"))
+                    .build());
+        }
+        return rows.stream()
+                .collect(Collectors.toMap(
+                        row -> codeTableKey(row.getReplaceGroup(), row.getSourceField(), row.getSourceValue()),
+                        CodeTableDto::getTargetValue,
+                        (left, right) -> right
+                ));
     }
 
     private List<LiaReportOutputSettingDto> parseOutputSettings(Sheet sheet) {
@@ -130,6 +163,14 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
             return value;
         }
         return optionalValueByHeaderPrefix(row, headers, "choose");
+    }
+
+    private String outputReplaceGroup(Row row, Map<String, Integer> headers) {
+        String value = optionalValue(row, headers, "replaceGroup");
+        if (!isBlank(value)) {
+            return value;
+        }
+        return optionalValue(row, headers, "relacepGroup");
     }
 
     private String toOutputTypes(List<LiaReportOutputSettingDto> outputSettings) {
@@ -187,6 +228,16 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
         return dataFormatter.formatCellValue(row.getCell(index)).trim();
     }
 
+    private String valueByAliases(Row row, Map<String, Integer> headers, String... aliases) {
+        for (String alias : aliases) {
+            String value = optionalValue(row, headers, alias);
+            if (!isBlank(value)) {
+                return value;
+            }
+        }
+        throw new IllegalArgumentException("規格檔缺少欄位：" + String.join("/", aliases));
+    }
+
     private String optionalValueByHeaderPrefix(Row row, Map<String, Integer> headers, String headerPrefix) {
         return headers.entrySet().stream()
                 .filter(entry -> entry.getKey().startsWith(headerPrefix))
@@ -212,5 +263,13 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String codeTableKey(String replaceGroup, String sourceField, String sourceValue) {
+        return normalizeKeyPart(replaceGroup) + "|" + normalizeKeyPart(sourceField) + "|" + normalizeKeyPart(sourceValue);
+    }
+
+    private String normalizeKeyPart(String value) {
+        return value == null ? "" : value.trim();
     }
 }

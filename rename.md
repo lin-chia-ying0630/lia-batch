@@ -9,6 +9,7 @@
 `outputFileTxt`、`outputFileExcel`、`outputFileZip` 欄位填 `V` 才會產生對應檔案。
 第一張工作表 `outputFileDetail` 也有 `outputFileName`，用來對應 `outputSettings`，因此可以設定多組檔案與各自欄位。
 `outputFileDetail` 的 `sourceFile` 與 `sourceField` 可以同時空白；若同時空白，系統會使用 `fixedValue` 固定值欄位。
+`outputFileDetail` 若填 `relacepGroup` 或 `replaceGroup`，系統會到 `codeTable` 工作表依 `replaceGroup + sourceField + source_value` 找出 `target_value` 後輸出；找不到對應資料時不轉換，直接輸出原始值。
 
 這樣可以避免 Trinity 或後續作業讀到尚未寫完的不完整檔案。
 

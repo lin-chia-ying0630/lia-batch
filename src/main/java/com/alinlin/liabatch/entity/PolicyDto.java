@@ -23,5 +23,7 @@ public class PolicyDto {
     private String policySeq;
     private String changeSeq;
     private String productCode;
+    private String mop;
+
     private BigDecimal insuredAmount;
 }

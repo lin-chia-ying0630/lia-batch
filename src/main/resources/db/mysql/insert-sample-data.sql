@@ -9,6 +9,7 @@ INSERT INTO lia_policy (
     policy_seq,
     change_seq,
     product_code,
+    mop,
     insured_amount,
     active_flag
 ) VALUES (
@@ -16,8 +17,9 @@ INSERT INTO lia_policy (
     '01',
     'POL123456789',
     '00001',
-    '1',
+    'A',
     'P001',
+    '1',
     1000000,
     'Y'
 ) ON DUPLICATE KEY UPDATE
@@ -26,6 +28,7 @@ INSERT INTO lia_policy (
     policy_seq = VALUES(policy_seq),
     change_seq = VALUES(change_seq),
     product_code = VALUES(product_code),
+    mop = VALUES(mop),
     insured_amount = VALUES(insured_amount),
     active_flag = VALUES(active_flag),
     updated_at = CURRENT_TIMESTAMP;

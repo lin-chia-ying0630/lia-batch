@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * LIA通報 Excel 規格 DTO。
@@ -21,4 +22,5 @@ public class LiaReportSpecDto {
     private String outputTypes;
     private String zipPassword;
     private List<LiaReportOutputSettingDto> outputSettings;
+    private Map<String, String> codeTable;
 }

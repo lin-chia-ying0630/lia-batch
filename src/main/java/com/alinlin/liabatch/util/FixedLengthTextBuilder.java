@@ -5,6 +5,7 @@ import com.alinlin.liabatch.dto.LiaReportData;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 固定長度文字產生器。
@@ -13,7 +14,15 @@ import java.util.List;
  */
 public class FixedLengthTextBuilder {
 
-    private final LiaReportFieldValueResolver valueResolver = new LiaReportFieldValueResolver();
+    private final LiaReportFieldValueResolver valueResolver;
+
+    public FixedLengthTextBuilder() {
+        this(Map.of());
+    }
+
+    public FixedLengthTextBuilder(Map<String, String> codeTable) {
+        this.valueResolver = new LiaReportFieldValueResolver(codeTable);
+    }
 
     public String buildLine(LiaReportData reportData, List<LiaFieldSpecDto> specs) {
         int lineLength = specs.stream()
