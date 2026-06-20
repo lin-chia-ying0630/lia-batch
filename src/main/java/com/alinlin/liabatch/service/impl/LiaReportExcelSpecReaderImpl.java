@@ -133,7 +133,7 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
                 continue;
             }
             addOutputSetting(settings, row, headers, "outputFileTxt", "txt");
-            addOutputSetting(settings, row, headers, "outputFileZip", "zip");
+            addZipOutputSetting(settings, row, headers);
             addOutputSetting(settings, row, headers, "outputFileExcel", "excel");
         }
         return settings;
@@ -151,10 +151,40 @@ public class LiaReportExcelSpecReaderImpl implements LiaReportExcelSpecReader {
                     .outputFileName(value(row, headers, "outputFileName"))
                     .outputType(outputType)
                     .dataSelectType(outputDataSelectType(row, headers))
+                    .txtDelimiter(optionalValue(row, headers, "txtDelimiter"))
                     .zipPassword(value(row, headers, "zipPassword"))
                     .settingDesc(value(row, headers, "settingDesc"))
                     .build());
         }
+    }
+
+    private void addZipOutputSetting(
+            List<LiaReportOutputSettingDto> settings,
+            Row row,
+            Map<String, Integer> headers
+    ) {
+        String outputFileZip = value(row, headers, "outputFileZip");
+        if (isBlank(outputFileZip)) {
+            return;
+        }
+
+        String outputFileName = value(row, headers, "outputFileName");
+        settings.add(LiaReportOutputSettingDto.builder()
+                .outputFileName(outputFileName)
+                .outputType("zip")
+                .zipFileName(zipFileName(outputFileName, outputFileZip))
+                .dataSelectType(outputDataSelectType(row, headers))
+                .txtDelimiter(optionalValue(row, headers, "txtDelimiter"))
+                .zipPassword(value(row, headers, "zipPassword"))
+                .settingDesc(value(row, headers, "settingDesc"))
+                .build());
+    }
+
+    private String zipFileName(String outputFileName, String outputFileZip) {
+        if (isEnabled(outputFileZip)) {
+            return outputFileName;
+        }
+        return outputFileZip;
     }
 
     private String outputDataSelectType(Row row, Map<String, Integer> headers) {

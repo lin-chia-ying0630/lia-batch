@@ -11,6 +11,7 @@ import com.alinlin.liabatch.service.LiaReportExcelSpecReader;
 import com.alinlin.liabatch.service.LiaReportOutputFileService;
 import com.alinlin.liabatch.service.LiaReportService;
 import com.alinlin.liabatch.util.FixedLengthTextBuilder;
+import com.alinlin.liabatch.util.DelimitedTextBuilder;
 import com.alinlin.liabatch.util.LiaReportExcelOutputUtil;
 import com.alinlin.liabatch.util.LiaReportTxtOutputUtil;
 import com.alinlin.liabatch.util.LiaReportZipOutputUtil;
@@ -83,6 +84,7 @@ public class LiaReportServiceImpl implements LiaReportService {
         List<Path> txtPaths = new ArrayList<>();
         List<Path> excelPaths = new ArrayList<>();
         List<Path> zipPaths = new ArrayList<>();
+        Map<String, ZipPackagePlan> zipPackagePlans = new LinkedHashMap<>();
 
         for (Map.Entry<String, List<LiaReportOutputSettingDto>> entry : settingsByOutputFile.entrySet()) {
             String outputFileName = entry.getKey();
@@ -96,7 +98,7 @@ public class LiaReportServiceImpl implements LiaReportService {
             String resolvedZipPassword = choose(zipPassword, zipPassword(outputSettings));
             List<LiaReportData> reportDataList = reportDataList(outputSettings, reportData);
             List<String> lines = outputTypes.contains(LiaReportOutputType.TXT) || outputTypes.contains(LiaReportOutputType.ZIP)
-                    ? buildLines(reportDataList, fileSpecs, reportSpec.getCodeTable())
+                    ? buildLines(reportDataList, fileSpecs, reportSpec.getCodeTable(), txtDelimiter(outputSettings))
                     : null;
 
             Path plannedTxtPath = outputDirectory.resolve(withExtension(outputFileName, ".txt"));
@@ -114,10 +116,20 @@ public class LiaReportServiceImpl implements LiaReportService {
             }
 
             if (outputTypes.contains(LiaReportOutputType.ZIP)) {
-                Path zipPath = outputDirectory.resolve(withExtension(outputFileName, ".zip"));
-                zipOutputUtil.write(zipPath, zipEntries(plannedTxtPath, plannedExcelPath, reportDataList, fileSpecs, lines, excelOutputUtil), resolvedZipPassword);
-                zipPaths.add(zipPath);
+                String zipFileName = zipFileName(outputSettings, outputFileName);
+                deleteObsoleteZipPath(outputDirectory, outputFileName, zipFileName);
+                ZipPackagePlan zipPackagePlan = zipPackagePlans.computeIfAbsent(zipFileName, name -> new ZipPackagePlan(resolvedZipPassword));
+                zipPackagePlan.mergePassword(zipFileName, resolvedZipPassword);
+                zipPackagePlan.putEntries(zipEntries(plannedTxtPath, plannedExcelPath, reportDataList, fileSpecs, lines, excelOutputUtil));
+            } else {
+                deleteObsoleteZipPath(outputDirectory, outputFileName, "");
             }
+        }
+
+        for (Map.Entry<String, ZipPackagePlan> entry : zipPackagePlans.entrySet()) {
+            Path zipPath = outputDirectory.resolve(withExtension(entry.getKey(), ".zip"));
+            zipOutputUtil.write(zipPath, entry.getValue().entries(), entry.getValue().password());
+            zipPaths.add(zipPath);
         }
 
         return LiaReportGenerateResult.builder()
@@ -146,6 +158,21 @@ public class LiaReportServiceImpl implements LiaReportService {
             return commandValue;
         }
         return specValue == null ? "" : specValue;
+    }
+
+    private void deleteObsoleteZipPath(Path outputDirectory, String outputFileName, String zipFileName) {
+        Path legacyZipPath = outputDirectory.resolve(withExtension(outputFileName, ".zip"));
+        Path configuredZipPath = zipFileName == null || zipFileName.isBlank()
+                ? null
+                : outputDirectory.resolve(withExtension(zipFileName, ".zip"));
+        if (configuredZipPath != null && legacyZipPath.equals(configuredZipPath)) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(legacyZipPath);
+        } catch (IOException e) {
+            throw new IllegalStateException("刪除舊ZIP檔失敗：" + legacyZipPath, e);
+        }
     }
 
     private Map<String, byte[]> zipEntries(
@@ -184,12 +211,31 @@ public class LiaReportServiceImpl implements LiaReportService {
     private List<String> buildLines(
             List<LiaReportData> reportDataList,
             List<LiaFieldSpecDto> fileSpecs,
-            Map<String, String> codeTable
+            Map<String, String> codeTable,
+            String txtDelimiter
     ) {
+        if (txtDelimiter != null && !txtDelimiter.isBlank()) {
+            DelimitedTextBuilder textBuilder = new DelimitedTextBuilder(txtDelimiter, codeTable);
+            return reportDataList.stream()
+                    .map(reportData -> textBuilder.buildLine(reportData, fileSpecs))
+                    .toList();
+        }
         FixedLengthTextBuilder textBuilder = new FixedLengthTextBuilder(codeTable);
         return reportDataList.stream()
                 .map(reportData -> textBuilder.buildLine(reportData, fileSpecs))
                 .toList();
+    }
+
+    private String txtDelimiter(List<LiaReportOutputSettingDto> outputSettings) {
+        String delimiter = outputSettings.stream()
+                .map(LiaReportOutputSettingDto::getTxtDelimiter)
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .orElse("");
+        if ("\\t".equalsIgnoreCase(delimiter) || "TAB".equalsIgnoreCase(delimiter)) {
+            return "\t";
+        }
+        return delimiter;
     }
 
     private String withExtension(String fileName, String extension) {
@@ -244,7 +290,51 @@ public class LiaReportServiceImpl implements LiaReportService {
                 .orElse("");
     }
 
+    private String zipFileName(List<LiaReportOutputSettingDto> outputSettings, String defaultFileName) {
+        return outputSettings.stream()
+                .filter(setting -> LiaReportOutputType.ZIP.name().equalsIgnoreCase(setting.getOutputType()))
+                .map(LiaReportOutputSettingDto::getZipFileName)
+                .filter(fileName -> fileName != null && !fileName.isBlank())
+                .findFirst()
+                .orElse(defaultFileName);
+    }
+
     private Path firstOrNull(List<Path> paths) {
         return paths.isEmpty() ? null : paths.get(0);
+    }
+
+    private static class ZipPackagePlan {
+
+        private String password;
+        private final Map<String, byte[]> entries = new LinkedHashMap<>();
+
+        private ZipPackagePlan(String password) {
+            this.password = password == null ? "" : password;
+        }
+
+        private void mergePassword(String zipFileName, String password) {
+            if (password == null || password.isBlank()) {
+                return;
+            }
+            if (this.password.isBlank()) {
+                this.password = password;
+                return;
+            }
+            if (!this.password.equals(password)) {
+                throw new IllegalArgumentException("同一個ZIP檔名不可設定不同密碼：" + zipFileName);
+            }
+        }
+
+        private void putEntries(Map<String, byte[]> entries) {
+            this.entries.putAll(entries);
+        }
+
+        private String password() {
+            return password;
+        }
+
+        private Map<String, byte[]> entries() {
+            return entries;
+        }
     }
 }

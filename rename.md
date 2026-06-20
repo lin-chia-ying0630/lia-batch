@@ -4,9 +4,11 @@
 
 批次產生 LIA 通報檔時，會先寫入 `.writing` 暫存檔，確認寫入成功後，才發布為正式 TXT 檔。
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表會決定要產生哪些檔案，以及每一種檔案的檔名。
-第一欄 `outputFileName` 是檔名基底，例如 `aaa`，系統會依輸出格式產生 `aaa.txt`、`aaa.zip`、`aaa.xlsx`。
+第一欄 `outputFileName` 是檔名基底，例如 `aaa`，系統會依輸出格式產生 `aaa.txt`、`aaa.xlsx`；`outputFileZip` 則填入要打包的 ZIP 檔名。
 `choose` 欄位填 `1` 代表使用 `selectReportData()`，填 `2` 代表使用 `selectProductOrderReportData()`。
-`outputFileTxt`、`outputFileExcel`、`outputFileZip` 欄位填 `V` 才會產生對應檔案。
+`txtDelimiter` 欄位可設定 TXT 分隔符號；空白表示固定長度 TXT，填 `|`、`,`、`\t` 或 `TAB` 表示產生分隔檔。
+`outputFileTxt`、`outputFileExcel` 欄位填 `V` 才會產生對應檔案；`outputFileZip` 欄位填 ZIP 檔名才會產生 ZIP。
+多列 `outputFileZip` 填同一個 ZIP 檔名時，會把多個輸出檔合併打包到同一個 ZIP。
 第一張工作表 `outputFileDetail` 也有 `outputFileName`，用來對應 `outputSettings`，因此可以設定多組檔案與各自欄位。
 `outputFileDetail` 的 `sourceFile` 與 `sourceField` 可以同時空白；若同時空白，系統會使用 `fixedValue` 固定值欄位。
 `outputFileDetail` 若填 `relacepGroup` 或 `replaceGroup`，系統會到 `codeTable` 工作表依 `replaceGroup + sourceField + source_value` 找出 `target_value` 後輸出；找不到對應資料時不轉換，直接輸出原始值。
@@ -31,14 +33,14 @@ target/out/LIA_REPORT_01_20260607103000.txt.writing
 
 1. 讀取 `lia-report-spec.xlsx` 的 `outputSettings`。
 2. 依 `outputSettings.outputFileName` 找到 `outputFileDetail.outputFileName` 相同的欄位規格。
-3. 判斷 `outputFileTxt`、`outputFileExcel`、`outputFileZip` 是否為 `V`。
+3. 判斷 `outputFileTxt`、`outputFileExcel` 是否為 `V`，並判斷 `outputFileZip` 是否有填 ZIP 檔名。
 4. 若包含 `txt`，將固定長度內容寫入 `.writing`。
 5. 正常關閉 TXT 暫存檔。
 6. 將 `.writing` 發布為正式 `.txt`。
 7. 如果正式 TXT 已存在，使用本次產生的檔案覆蓋。
 8. 若包含 `excel`，在正式檔名基底旁邊產生 Excel 檢視檔。
-9. 若包含 `zip`，在正式檔名基底旁邊產生 ZIP 檔。
-10. 若 zip 列的 `zipPassword` 有填值，ZIP 使用該 MD5 字串作為密碼。
+9. 若 `outputFileZip` 有填值，依該欄位的 ZIP 檔名分組打包；多列同名會產生同一個 ZIP。
+10. 若 zip 列的 `zipPassword` 有填值，ZIP 使用該 MD5 字串作為密碼；同一 ZIP 檔名不可設定不同密碼。
 
 ## 正式檔名
 
@@ -48,7 +50,7 @@ target/out/LIA_REPORT_01_20260607103000.txt.writing
 aaa
 ```
 
-且 `outputFileTxt`、`outputFileExcel`、`outputFileZip` 都填 `V`，`--output=target/out/` 實際產生：
+且 `outputFileTxt`、`outputFileExcel` 填 `V`、`outputFileZip` 填 `aaa`，`--output=target/out/` 實際產生：
 
 ```text
 target/out/aaa.txt
@@ -66,10 +68,12 @@ target/out/aaa.xlsx
 
 ```text
 outputFileName | choose | outputFileTxt | outputFileExcel | outputFileZip | zipPassword | settingDesc
-aaa            | 1      | V             | V               | V             |             | 固定長度TXT通報檔；填V才產生
+aaa            | 1      | V             | V               | aaa           |             | 固定長度TXT通報檔
+bbb            | 2      | V             | V               | aaa           |             | 商品明細通報檔
 ```
 
-`outputFileTxt`、`outputFileExcel`、`outputFileZip` 填 `V` 表示產生，空白表示不產生。
+`outputFileTxt`、`outputFileExcel` 填 `V` 表示產生，空白表示不產生。
+`outputFileZip` 填 ZIP 檔名表示產生 ZIP，空白表示不打包；上例會把 `aaa.txt`、`aaa.xlsx`、`bbb.txt`、`bbb.xlsx` 放進同一個 `aaa.zip`。
 
 ### ZIP 密碼
 

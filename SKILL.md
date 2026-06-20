@@ -66,7 +66,7 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 ## outputSettings 規則
 
 `outputFileDetail` 工作表第一欄也有 `outputFileName`，用來對應 `outputSettings.outputFileName`。
-例如 `outputSettings.outputFileName=aaa`，就會取 `outputFileDetail.outputFileName=aaa` 的欄位規格產生 `aaa.txt`、`aaa.xlsx` 與 `aaa.zip`。
+例如 `outputSettings.outputFileName=aaa`，就會取 `outputFileDetail.outputFileName=aaa` 的欄位規格產生 `aaa.txt`、`aaa.xlsx`；若 `outputFileZip=report`，則會把該列的 TXT/Excel 項目放入 `report.zip`。
 
 `outputFileDetail` 的來源欄位規則：
 
@@ -92,11 +92,12 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 
 `lia-report-spec.xlsx` 的 `outputSettings` 工作表以一列代表一組輸出檔：
 
-- 第一欄 `outputFileName`：產生的檔名基底，例如 `aaa`，系統會依格式產生 `aaa.txt`、`aaa.zip`、`aaa.xlsx`。
+- 第一欄 `outputFileName`：產生的檔名基底，例如 `aaa`，系統會依格式產生 `aaa.txt`、`aaa.xlsx`；ZIP 檔名由 `outputFileZip` 決定。
 - `choose`：填 `1` 表示使用 `selectReportData()` 產生單筆資料；填 `2` 表示使用 `selectProductOrderReportData()` 依商品訂單產生多筆資料。
+- `txtDelimiter`：TXT 分隔符號；空白表示固定長度 TXT，填 `|`、`,`、`\t` 或 `TAB` 表示產生分隔檔。
 - `outputFileTxt`：填 `V` 表示產生 TXT。
 - `outputFileExcel`：填 `V` 表示產生 Excel。
-- `outputFileZip`：填 `V` 表示產生 ZIP。
+- `outputFileZip`：填 ZIP 檔名表示產生 ZIP；多列填相同 ZIP 檔名時，會合併打包到同一個 ZIP。為相容舊設定，填 `V` 仍代表用 `outputFileName` 作為 ZIP 檔名。
 - `zipPassword`：只給 `zip` 使用，請填已經 MD5 處理過的密碼；空白表示只壓縮不加密。
 - `settingDesc`：設定說明。
 
@@ -106,6 +107,7 @@ mysql -uroot -p < src/main/resources/db/mysql/insert-sample-data.sql
 - `--output=target/lia-report.txt` 會視為指定輸出位置，目錄使用 `target/`，檔名仍使用 `outputSettings.outputFileName` 加上副檔名。
 - 命令列 `--output-types=` 仍可臨時覆蓋哪些格式要輸出，但檔名仍以 `outputSettings.outputFileName` 為準。
 - 命令列 `--zip-password=` 仍可臨時覆蓋 Excel 的 `zipPassword`。
+- 同一個 ZIP 檔名若多列都有 `zipPassword`，密碼必須相同；若只有其中一列有填，會使用該密碼。
 - Excel 檔內的 sheet 名稱與檔名基底相同，例如 `aaa.xlsx` 的 sheet 名稱為 `aaa`。
 - `.writing` 暫存檔命名為 `{finalName}.writing`，寫入成功後才發布成正式 `.txt`。
 - TXT 使用 Big5 編碼輸出。
@@ -149,7 +151,7 @@ java -jar target/LIA-batch-0.0.1-SNAPSHOT.jar --output=target/out/ --output-type
 java -jar target/LIA-batch-0.0.1-SNAPSHOT.jar --output=target/out/ --output-types=zip --zip-password=098f6bcd4621d373cade4e832627b4f6
 ```
 
-正式排程建議將檔名基底、是否產生與 `zipPassword` 都設在 `lia-report-spec.xlsx` 的 `outputSettings` 工作表，命令列只保留 `--output`。
+正式排程建議將檔名基底、是否產生、ZIP 檔名與 `zipPassword` 都設在 `lia-report-spec.xlsx` 的 `outputSettings` 工作表，命令列只保留 `--output`。
 
 ## 切換規格檔
 

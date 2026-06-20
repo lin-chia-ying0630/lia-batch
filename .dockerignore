@@ -1,0 +1,12 @@
+.git
+.idea
+.m2
+.DS_Store
+target/*.jar.original
+target/surefire-reports
+target/test-classes
+src/main/resources/~$lia-report-spec.xlsx
+lia-batch-console/node_modules
+lia-batch-console/dist
+lia-batch-console/dist-server
+lia-batch-console/src/main/resources/~$lia-report-spec.xlsx
