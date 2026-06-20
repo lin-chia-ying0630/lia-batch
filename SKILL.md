@@ -46,7 +46,7 @@
 - `aaa` 檔案使用 `selectReportData()` 產生單筆通報資料。
 - `bbb` 檔案使用 `selectProductOrderReportData()` 依同一張保單的多筆 `lia_product_order` 產生多筆資料列。
 - 執行時資料來源固定使用 MySQL/MyBatis。
-- 每次批次觸發後會新增一筆 `lia_log`，欄位包含 `generate_date`、`generate_time` 與 `content`；成功會記錄輸出檔，失敗會記錄錯誤內容。
+- console 後端每次批次觸發結束後會新增一筆 `lia_log`，欄位包含 `generate_date`、`generate_time` 與 `content`；`content` 內容與畫面「執行紀錄」顯示的 log 一致。
 
 ## MySQL 建檔
 

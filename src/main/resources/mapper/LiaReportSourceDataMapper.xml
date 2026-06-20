@@ -90,15 +90,4 @@
         LIMIT 1
     </select>
 
-    <insert id="insertLiaLog">
-        INSERT INTO lia_log (
-            generate_date,
-            generate_time,
-            content
-        ) VALUES (
-            #{generateDate},
-            #{generateTime},
-            #{content}
-        )
-    </insert>
 </mapper>
