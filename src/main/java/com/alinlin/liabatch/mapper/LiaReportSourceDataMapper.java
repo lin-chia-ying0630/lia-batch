@@ -28,4 +28,10 @@ public interface LiaReportSourceDataMapper {
     ProductDto selectProductByProductCode(@Param("productCode") String productCode);
 
     PaymentDto selectPaymentByPolicyId(@Param("policyId") Long policyId);
+
+    int insertLiaLog(
+            @Param("generateDate") String generateDate,
+            @Param("generateTime") String generateTime,
+            @Param("content") String content
+    );
 }

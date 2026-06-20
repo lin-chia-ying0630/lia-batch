@@ -46,7 +46,7 @@
 - `aaa` 檔案使用 `selectReportData()` 產生單筆通報資料。
 - `bbb` 檔案使用 `selectProductOrderReportData()` 依同一張保單的多筆 `lia_product_order` 產生多筆資料列。
 - 執行時資料來源固定使用 MySQL/MyBatis。
-- console 後端每次批次觸發結束後會新增一筆 `lia_log`，欄位包含 `generate_date`、`generate_time` 與 `content`；`content` 內容與畫面「執行紀錄」顯示的 log 一致。
+- console 不連資料庫。批次結束後，Node/Express 會將 Java 產生的執行紀錄暫存成檔案並交給 Java JAR 的 `--log-content-file`，由 Java/MyBatis 使用既有 datasource 寫入 `lia_log.content`。
 
 ## MySQL 建檔
 
