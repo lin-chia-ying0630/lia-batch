@@ -8,6 +8,8 @@ import com.alinlin.liabatch.entity.ProductDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -28,4 +30,10 @@ public interface LiaReportSourceDataMapper {
     ProductDto selectProductByProductCode(@Param("productCode") String productCode);
 
     PaymentDto selectPaymentByPolicyId(@Param("policyId") Long policyId);
+
+    void insertLiaLog(
+            @Param("generateDate") LocalDate generateDate,
+            @Param("generateTime") LocalTime generateTime,
+            @Param("content") String content
+    );
 }

@@ -41,11 +41,12 @@
 - Mapper XML 放在 `src/main/resources/mapper`。
 - SQL 放在 XML，不放在 service class。
 - `LiaReportSourceDataMapper.xml` 使用下列 MySQL 資料表：
-  `lia_policy`、`lia_customer`、`lia_product_order`、`lia_product`、`lia_payment`。
+  `lia_policy`、`lia_customer`、`lia_product_order`、`lia_product`、`lia_payment`、`lia_log`。
 - 一張保單可有多筆 `lia_product_order`；程式以 `ProductOrderDto` 承接商品訂單資料，產檔目前只取 `product_order_no=1` 的商品代碼。
 - `aaa` 檔案使用 `selectReportData()` 產生單筆通報資料。
 - `bbb` 檔案使用 `selectProductOrderReportData()` 依同一張保單的多筆 `lia_product_order` 產生多筆資料列。
 - 執行時資料來源固定使用 MySQL/MyBatis。
+- 每次批次觸發後會新增一筆 `lia_log`，欄位包含 `generate_date`、`generate_time` 與 `content`；成功會記錄輸出檔，失敗會記錄錯誤內容。
 
 ## MySQL 建檔
 
@@ -55,6 +56,7 @@
 - `src/main/resources/db/mysql/insert-sample-data.sql`
 - `src/main/resources/db/mysql/alter-payment-policy-id.sql`
 - `src/main/resources/db/mysql/alter-product-order.sql`
+- `src/main/resources/db/mysql/alter-lia-log.sql`
 
 執行範例：
 
